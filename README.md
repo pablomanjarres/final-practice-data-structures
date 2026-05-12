@@ -7,8 +7,8 @@
 
 ## Team members
 
-- *(fill in your names + IDs before submission)*
-
+- PABLO MANJARRES NEGRETTE
+- VALENTINA BARBOSA QUILINDO
 ## Architecture
 
 The assignment rubric requires "Code in C++" with a free-form simulation. The
