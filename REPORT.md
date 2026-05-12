@@ -101,21 +101,13 @@ exploiting key structure.
 
 Run `./bench --full -o results-full.csv` and copy from the CSV:
 
-| Algorithm | n = 100K | n = 500K | n = 1M | n = 3M | n = 10M |
-| --------- | -------- | -------- | ------ | ------ | ------- |
-| DialSort  | 14.8     | 11.9     | 10.2   | 7.1    | 4.8     |
-| Radix LSD | 176.4    | 191.7    | 198.3  | 196.5  | 184.2   |
-| MergeSort | 28.6     | 24.9     | 22.1   | 19.7   | 16.5    |
+| Algorithm | n = 100K | n = 500K | n = 1M | n = 3M  | n = 10M  |
+| --------- | -------- | -------- | ------ | ------- | -------- |
+| DialSort  | 6.76     | 41.95    | 98.04  | 422.54  | 2083.33  |
+| Radix LSD | 0.57     | 2.61     | 5.04   | 15.27   | 54.29    |
+| MergeSort | 3.50     | 20.08    | 45.25  | 152.28  | 606.06   |
 
-*(throughput in M items/s = `n / meanMs * 1000 / 1e6`)*
-
-Equivalent mean wall-clock per run (ms):
-
-| Algorithm | n = 100K | n = 500K | n = 1M | n = 3M | n = 10M |
-| --------- | -------- | -------- | ------ | ------ | ------- |
-| DialSort  | 6.76     | 41.95    | 98.04  | 422.54 | 2083.33 |
-| Radix LSD | 0.57     | 2.61     | 5.04   | 15.27  | 54.29   |
-| MergeSort | 3.50     | 20.08    | 45.25  | 152.28 | 606.06  |
+*(mean wall-clock per run in ms, averaged over 3 timed reps; lower is better)*
 
 ### 3.2 Distribution sensitivity (n = 1M, U = n)
 
@@ -123,11 +115,13 @@ Run `./bench --algo dial,radix,merge --sizes 1000000 --dists uniform,sorted,reve
 
 | Distribution | DialSort | Radix LSD | MergeSort |
 | ------------ | -------- | --------- | --------- |
-| Uniform      | 10.2     | 198.3     | 22.1      |
-| Sorted       | 11.4     | 195.6     | 35.7      |
-| Reverse      | 11.1     | 196.0     | 28.4      |
-| Gaussian     | 9.7      | 197.1     | 21.8      |
-| SparseDup    | 24.6     | 200.8     | 23.5      |
+| Uniform      |  98.04   |  5.04     | 45.25     |
+| Sorted       |  87.72   |  5.11     | 28.01     |
+| Reverse      |  90.09   |  5.10     | 35.21     |
+| Gaussian     | 103.09   |  5.07     | 45.87     |
+| SparseDup    |  40.65   |  4.98     | 42.55     |
+
+*(mean wall-clock per run in ms; lower is better)*
 
 ### 3.3 Universe-size sensitivity (n = 1M)
 
@@ -135,9 +129,11 @@ Run with `--U-mode tenthN`, `eqN`, `tenN`:
 
 | Mode      | DialSort | Radix LSD | MergeSort |
 | --------- | -------- | --------- | --------- |
-| U = n/10  | 28.1     | 199.4     | 22.0      |
-| U = n     | 10.2     | 198.3     | 22.1      |
-| U = 10·n  |  3.4     | 197.8     | 22.0      |
+| U = n/10  |  35.59   |  5.02     | 45.45     |
+| U = n     |  98.04   |  5.04     | 45.25     |
+| U = 10·n  | 294.12   |  5.06     | 45.45     |
+
+*(mean wall-clock per run in ms; lower is better)*
 
 ### 3.4 Memory wall (U = 10·n) — DialSort guardrail
 
@@ -173,23 +169,23 @@ perform per key.
 ### 4.2 Real execution time
 
 The measured pattern matches the theoretical prediction. At n = 1M, U = n,
-Radix LSD reaches 198.3 M items/s while DialSort sits at 10.2 M items/s
-(a 19.4× gap) and MergeSort at 22.1 M items/s (a 9.0× gap). The gap widens
-slightly as n grows: at n = 10M Radix is 38× faster than DialSort and 11×
-faster than MergeSort, because DialSort's bucket-array initialization cost
-scales with U = n and competes for the same L2/L3 cache lines as the
-input scan.
+Radix LSD finishes in 5.04 ms while DialSort takes 98.04 ms (a 19.4× gap)
+and MergeSort 45.25 ms (a 9.0× gap). The gap widens slightly as n grows:
+at n = 10M Radix is 38× faster than DialSort (54.29 ms vs. 2083.33 ms) and
+11× faster than MergeSort (54.29 ms vs. 606.06 ms), because DialSort's
+bucket-array initialization cost scales with U = n and competes for the
+same L2/L3 cache lines as the input scan.
 
-Radix's throughput stays in a narrow band (184–200 M items/s across all
+Radix's runtime stays in a narrow band (4.98–5.11 ms at n = 1M across all
 distributions and universe sizes tested) because its memory footprint and
 access pattern are independent of both U and the value distribution. Each
 key is touched 8 times total (4 read passes + 4 write passes) and the
 counting array (4 KiB) fits in L1.
 
-MergeSort's distribution sensitivity is the largest of the three: 35.7 M
-items/s on already-sorted input vs. 21.8 M items/s on Gaussian — a 64%
-swing — because adjacent runs end up presorted and the merge step exits
-its inner loop early.
+MergeSort's distribution sensitivity is the largest of the three: 28.01 ms
+on already-sorted input vs. 45.87 ms on Gaussian — a 64% swing — because
+adjacent runs end up presorted and the merge step exits its inner loop
+early.
 
 ### 4.3 Memory consumption
 
@@ -222,10 +218,11 @@ baseline.
 ## 5. Conclusions
 
 For 32-bit integer keys at n ≥ 10⁵, **Radix LSD is the right default** —
-it delivered 184–200 M items/s across every distribution and universe
-size we tested, and was 9–38× faster than the alternatives. DialSort is
-only competitive when U ≪ n (at U = n/10 it reached 28 M items/s, still
-7× slower than Radix), and becomes unusable past U ≈ 5·10⁷ where the
+it stayed under 5.1 ms per 1M-item sort across every distribution and
+universe size we tested, and was 9–38× faster than the alternatives.
+DialSort is only competitive when U ≪ n (at U = n/10 it finishes in
+35.59 ms, still 7× slower than Radix), and becomes unusable past
+U ≈ 5·10⁷ where the
 bucket-array overhead blows past the 500 MiB guardrail. MergeSort
 remains the right pick for any non-integer comparable type, and for
 nearly-sorted data its early-exit behaviour makes it the second-fastest
