@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmake --build cmake-build-debug)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(Get-ChildItem .\\\\cmake-build-debug\\\\bench.exe -ErrorAction SilentlyContinue | Select-Object FullName, Length, LastWriteTime; Write-Output '---'; & '.\\\\cmake-build-debug\\\\bench.exe' --help 2>&1 | Select-Object -First 5; Write-Output \"ExitCode: $LASTEXITCODE\")",
+      "PowerShell($out = & \"$PWD\\\\cmake-build-debug\\\\bench.exe\" --help 2>&1; Write-Output \"STDOUT/STDERR captured: [$out]\"; Write-Output \"Length: $\\($out.Length\\)\"; Write-Output \"ExitCode: $LASTEXITCODE\")",
+      "PowerShell($env:PATH = 'C:\\\\Program Files\\\\JetBrains\\\\CLion 2025.3.2\\\\bin\\\\mingw\\\\bin;' + $env:PATH; & \"$PWD\\\\cmake-build-debug\\\\bench.exe\" --quick --sizes 50000 2>&1 | Select-Object -First 20; Write-Output \"ExitCode: $LASTEXITCODE\")",
+      "PowerShell($env:PATH = 'C:\\\\Program Files\\\\JetBrains\\\\CLion 2025.3.2\\\\bin\\\\mingw\\\\bin;' + $env:PATH; $files = 'src/dial_sort.cpp','src/radix_sort.cpp','src/merge_sort.cpp','src/distributions.cpp','src/stats.cpp','src/runner.cpp','src/main.cpp'; & g++ -std=c++17 -O2 -Iinclude $files -o cmake-build-debug\\\\bench.exe 2>&1 | Select-Object -First 30; Write-Output \"Build exit: $LASTEXITCODE\")",
+      "PowerShell($env:PATH = 'C:\\\\Program Files\\\\JetBrains\\\\CLion 2025.3.2\\\\bin\\\\mingw\\\\bin;' + $env:PATH; & \".\\\\cmake-build-debug\\\\bench.exe\" --table --sizes 100000,250000 2>$null)"
+    ]
+  }
+}

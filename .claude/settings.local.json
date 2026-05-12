@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where g++)",
+      "Bash(where gcc *)",
+      "Bash(where make *)",
+      "Bash(where cl *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(wsl --status 2>&1 | Out-String; wsl -l -v 2>&1 | Out-String)",
+      "PowerShell(choco install *)",
+      "PowerShell(New-Item *)",
+      "PowerShell(Get-CimInstance *)",
+      "PowerShell(Resolve-DnsName *)"
+    ]
+  }
+}

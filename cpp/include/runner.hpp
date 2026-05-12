@@ -48,13 +48,16 @@ struct BenchRow {
     std::string error;
 };
 
-// Run the full configuration matrix. Writes CSV rows to `out`, optionally
-// preceded by a header line.
+enum class OutputFormat { Csv, Table };
+
+// Run the full configuration matrix. Writes results to `out` in CSV (default)
+// or aligned table form. `emitHeader` is honored for both formats.
 // Also writes per-cell progress lines to `progress` (typically std::cerr) so
 // that long benchmark runs aren't silent. Pass nullptr to suppress progress.
 void runMatrix(const BenchConfig& cfg,
                std::ostream& out,
                bool emitHeader,
-               std::ostream* progress);
+               std::ostream* progress,
+               OutputFormat format = OutputFormat::Csv);
 
 }  // namespace dialsort

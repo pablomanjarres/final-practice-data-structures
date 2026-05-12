@@ -43,8 +43,9 @@ void printHelp() {
         "  --reps N             timed reps per cell (default 3)\n"
         "  --warmup N           warmup reps (default 1)\n"
         "  --seed N             RNG seed (default 42)\n"
-        "  -o, --out FILE       write CSV to FILE (default: stdout)\n"
-        "  --no-header          omit CSV header line\n"
+        "  -o, --out FILE       write output to FILE (default: stdout)\n"
+        "  --table              human-readable aligned table instead of CSV\n"
+        "  --no-header          omit header line\n"
         "  --no-progress        omit per-cell progress on stderr\n"
         "  -h, --help           this help\n"
         "\n"
@@ -151,6 +152,7 @@ int main(int argc, char** argv) {
     std::string outPath;
     bool emitHeader = true;
     bool emitProgress = true;
+    OutputFormat format = OutputFormat::Csv;
 
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
@@ -187,6 +189,8 @@ int main(int argc, char** argv) {
             emitHeader = false;
         } else if (a == "--no-progress") {
             emitProgress = false;
+        } else if (a == "--table") {
+            format = OutputFormat::Table;
         } else {
             std::cerr << "Unknown argument: " << a << "\n"
                       << "Run with --help for usage.\n";
@@ -205,7 +209,7 @@ int main(int argc, char** argv) {
         out = &fileOut;
     }
 
-    runMatrix(cfg, *out, emitHeader, emitProgress ? &std::cerr : nullptr);
+    runMatrix(cfg, *out, emitHeader, emitProgress ? &std::cerr : nullptr, format);
 
     return 0;
 }

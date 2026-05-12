@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <iomanip>
 #include <iostream>
 #include <ostream>
 #include <sstream>
@@ -81,6 +82,47 @@ double timedRun(AlgoId algo, std::vector<int32_t>& work, int32_t U) {
 
 void writeCsvHeader(std::ostream& out) {
     out << "algo,n,U,distribution,reps,meanMs,medianMs,stdMs,throughput,correct,error,timesMs\n";
+    out.flush();
+}
+
+void writeTableHeader(std::ostream& out) {
+    out << std::left
+        << std::setw(7)  << "algo"
+        << std::right
+        << std::setw(10) << "n"
+        << std::setw(10) << "U"
+        << "  "
+        << std::left
+        << std::setw(10) << "dist"
+        << std::right
+        << std::setw(5)  << "reps"
+        << std::setw(11) << "mean(ms)"
+        << std::setw(11) << "median(ms)"
+        << std::setw(10) << "std(ms)"
+        << std::setw(11) << "thr(M/s)"
+        << "  ok\n";
+    out << std::string(7 + 10 + 10 + 2 + 10 + 5 + 11 + 11 + 10 + 11 + 5, '-') << "\n";
+    out.flush();
+}
+
+void writeTableRow(std::ostream& out, const BenchRow& r) {
+    out << std::left
+        << std::setw(7)  << algoName(r.algo)
+        << std::right
+        << std::setw(10) << r.n
+        << std::setw(10) << r.U
+        << "  "
+        << std::left
+        << std::setw(10) << distName(r.dist)
+        << std::right
+        << std::setw(5)  << r.reps
+        << std::setw(11) << std::fixed << std::setprecision(2) << r.meanMs
+        << std::setw(11) << std::fixed << std::setprecision(2) << r.medianMs
+        << std::setw(10) << std::fixed << std::setprecision(2) << r.stdMs
+        << std::setw(11) << std::fixed << std::setprecision(2) << (r.throughput / 1e6)
+        << "  " << (r.error.empty() ? (r.correct ? "yes" : "NO ") : "SKIP")
+        << "\n";
+    out.flush();
 }
 
 void writeCsvRow(std::ostream& out, const BenchRow& r) {
@@ -108,6 +150,7 @@ void writeCsvRow(std::ostream& out, const BenchRow& r) {
         out << r.timesMs[i];
     }
     out << "]\"\n";
+    out.flush();
 }
 
 }  // namespace
@@ -115,8 +158,17 @@ void writeCsvRow(std::ostream& out, const BenchRow& r) {
 void runMatrix(const BenchConfig& cfg,
                std::ostream& out,
                bool emitHeader,
-               std::ostream* progress) {
-    if (emitHeader) writeCsvHeader(out);
+               std::ostream* progress,
+               OutputFormat format) {
+    const bool table = (format == OutputFormat::Table);
+    if (emitHeader) {
+        if (table) writeTableHeader(out);
+        else       writeCsvHeader(out);
+    }
+    auto emitRow = [&](const BenchRow& r) {
+        if (table) writeTableRow(out, r);
+        else       writeCsvRow(out, r);
+    };
 
     const std::size_t totalCells =
         cfg.algos.size() * cfg.sizes.size() * cfg.dists.size();
@@ -144,7 +196,7 @@ void runMatrix(const BenchConfig& cfg,
                         << " exceeds guardrail; skipped.";
                     row.error = msg.str();
                     row.correct = false;
-                    writeCsvRow(out, row);
+                    emitRow(row);
                     if (progress) {
                         ++cellIdx;
                         *progress << "[" << cellIdx << "/" << totalCells << "] "
@@ -177,7 +229,7 @@ void runMatrix(const BenchConfig& cfg,
                 row.correct = isSortedAscending(lastResult)
                               && sameMultiset(baseInput, lastResult);
 
-                writeCsvRow(out, row);
+                emitRow(row);
 
                 if (progress) {
                     ++cellIdx;
